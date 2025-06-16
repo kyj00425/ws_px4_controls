@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/jmj/pro_asp_ws/ws_px4_control/src/px4_ros_com
+CMAKE_SOURCE_DIR = /home/kyj/ws_px4_controls/src/px4_ros_com
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/jmj/pro_asp_ws/ws_px4_control/build/px4_ros_com
+CMAKE_BINARY_DIR = /home/kyj/ws_px4_controls/build/px4_ros_com
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -142,9 +142,9 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/jmj/pro_asp_ws/ws_px4_control/build/px4_ros_com/CMakeFiles /home/jmj/pro_asp_ws/ws_px4_control/build/px4_ros_com//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyj/ws_px4_controls/build/px4_ros_com/CMakeFiles /home/kyj/ws_px4_controls/build/px4_ros_com//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/jmj/pro_asp_ws/ws_px4_control/build/px4_ros_com/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kyj/ws_px4_controls/build/px4_ros_com/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -276,30 +276,30 @@ offboard_control_srv/fast:
 .PHONY : offboard_control_srv/fast
 
 #=============================================================================
-# Target rules for targets named cli_pose_command
+# Target rules for targets named cli_pose_controller
 
 # Build rule for target.
-cli_pose_command: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cli_pose_command
-.PHONY : cli_pose_command
+cli_pose_controller: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cli_pose_controller
+.PHONY : cli_pose_controller
 
 # fast build rule for target.
-cli_pose_command/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_command.dir/build.make CMakeFiles/cli_pose_command.dir/build
-.PHONY : cli_pose_command/fast
+cli_pose_controller/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_controller.dir/build.make CMakeFiles/cli_pose_controller.dir/build
+.PHONY : cli_pose_controller/fast
 
 #=============================================================================
-# Target rules for targets named ament_cmake_python_copy_px4_ros_com
+# Target rules for targets named ament_cmake_python_symlink_px4_ros_com
 
 # Build rule for target.
-ament_cmake_python_copy_px4_ros_com: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ament_cmake_python_copy_px4_ros_com
-.PHONY : ament_cmake_python_copy_px4_ros_com
+ament_cmake_python_symlink_px4_ros_com: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 ament_cmake_python_symlink_px4_ros_com
+.PHONY : ament_cmake_python_symlink_px4_ros_com
 
 # fast build rule for target.
-ament_cmake_python_copy_px4_ros_com/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/ament_cmake_python_copy_px4_ros_com.dir/build.make CMakeFiles/ament_cmake_python_copy_px4_ros_com.dir/build
-.PHONY : ament_cmake_python_copy_px4_ros_com/fast
+ament_cmake_python_symlink_px4_ros_com/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/ament_cmake_python_symlink_px4_ros_com.dir/build.make CMakeFiles/ament_cmake_python_symlink_px4_ros_com.dir/build
+.PHONY : ament_cmake_python_symlink_px4_ros_com/fast
 
 #=============================================================================
 # Target rules for targets named ament_cmake_python_build_px4_ros_com_egg
@@ -386,30 +386,6 @@ src/examples/listeners/vehicle_gps_position_listener.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vehicle_gps_position_listener.dir/build.make CMakeFiles/vehicle_gps_position_listener.dir/src/examples/listeners/vehicle_gps_position_listener.cpp.s
 .PHONY : src/examples/listeners/vehicle_gps_position_listener.cpp.s
 
-src/examples/offboard/cli_pose_command.o: src/examples/offboard/cli_pose_command.cpp.o
-.PHONY : src/examples/offboard/cli_pose_command.o
-
-# target to build an object file
-src/examples/offboard/cli_pose_command.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_command.dir/build.make CMakeFiles/cli_pose_command.dir/src/examples/offboard/cli_pose_command.cpp.o
-.PHONY : src/examples/offboard/cli_pose_command.cpp.o
-
-src/examples/offboard/cli_pose_command.i: src/examples/offboard/cli_pose_command.cpp.i
-.PHONY : src/examples/offboard/cli_pose_command.i
-
-# target to preprocess a source file
-src/examples/offboard/cli_pose_command.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_command.dir/build.make CMakeFiles/cli_pose_command.dir/src/examples/offboard/cli_pose_command.cpp.i
-.PHONY : src/examples/offboard/cli_pose_command.cpp.i
-
-src/examples/offboard/cli_pose_command.s: src/examples/offboard/cli_pose_command.cpp.s
-.PHONY : src/examples/offboard/cli_pose_command.s
-
-# target to generate assembly for a file
-src/examples/offboard/cli_pose_command.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_command.dir/build.make CMakeFiles/cli_pose_command.dir/src/examples/offboard/cli_pose_command.cpp.s
-.PHONY : src/examples/offboard/cli_pose_command.cpp.s
-
 src/examples/offboard/offboard_control.o: src/examples/offboard/offboard_control.cpp.o
 .PHONY : src/examples/offboard/offboard_control.o
 
@@ -458,6 +434,30 @@ src/examples/offboard/offboard_control_srv.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/offboard_control_srv.dir/build.make CMakeFiles/offboard_control_srv.dir/src/examples/offboard/offboard_control_srv.cpp.s
 .PHONY : src/examples/offboard/offboard_control_srv.cpp.s
 
+src/examples/simple_controller/cli_pose_command.o: src/examples/simple_controller/cli_pose_command.cpp.o
+.PHONY : src/examples/simple_controller/cli_pose_command.o
+
+# target to build an object file
+src/examples/simple_controller/cli_pose_command.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_controller.dir/build.make CMakeFiles/cli_pose_controller.dir/src/examples/simple_controller/cli_pose_command.cpp.o
+.PHONY : src/examples/simple_controller/cli_pose_command.cpp.o
+
+src/examples/simple_controller/cli_pose_command.i: src/examples/simple_controller/cli_pose_command.cpp.i
+.PHONY : src/examples/simple_controller/cli_pose_command.i
+
+# target to preprocess a source file
+src/examples/simple_controller/cli_pose_command.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_controller.dir/build.make CMakeFiles/cli_pose_controller.dir/src/examples/simple_controller/cli_pose_command.cpp.i
+.PHONY : src/examples/simple_controller/cli_pose_command.cpp.i
+
+src/examples/simple_controller/cli_pose_command.s: src/examples/simple_controller/cli_pose_command.cpp.s
+.PHONY : src/examples/simple_controller/cli_pose_command.s
+
+# target to generate assembly for a file
+src/examples/simple_controller/cli_pose_command.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cli_pose_controller.dir/build.make CMakeFiles/cli_pose_controller.dir/src/examples/simple_controller/cli_pose_command.cpp.s
+.PHONY : src/examples/simple_controller/cli_pose_command.cpp.s
+
 src/lib/frame_transforms.o: src/lib/frame_transforms.cpp.o
 .PHONY : src/lib/frame_transforms.o
 
@@ -496,10 +496,10 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... test"
 	@echo "... ament_cmake_python_build_px4_ros_com_egg"
-	@echo "... ament_cmake_python_copy_px4_ros_com"
+	@echo "... ament_cmake_python_symlink_px4_ros_com"
 	@echo "... px4_ros_com_uninstall"
 	@echo "... uninstall"
-	@echo "... cli_pose_command"
+	@echo "... cli_pose_controller"
 	@echo "... debug_vect_advertiser"
 	@echo "... frame_transforms"
 	@echo "... offboard_control"
@@ -515,15 +515,15 @@ help:
 	@echo "... src/examples/listeners/vehicle_gps_position_listener.o"
 	@echo "... src/examples/listeners/vehicle_gps_position_listener.i"
 	@echo "... src/examples/listeners/vehicle_gps_position_listener.s"
-	@echo "... src/examples/offboard/cli_pose_command.o"
-	@echo "... src/examples/offboard/cli_pose_command.i"
-	@echo "... src/examples/offboard/cli_pose_command.s"
 	@echo "... src/examples/offboard/offboard_control.o"
 	@echo "... src/examples/offboard/offboard_control.i"
 	@echo "... src/examples/offboard/offboard_control.s"
 	@echo "... src/examples/offboard/offboard_control_srv.o"
 	@echo "... src/examples/offboard/offboard_control_srv.i"
 	@echo "... src/examples/offboard/offboard_control_srv.s"
+	@echo "... src/examples/simple_controller/cli_pose_command.o"
+	@echo "... src/examples/simple_controller/cli_pose_command.i"
+	@echo "... src/examples/simple_controller/cli_pose_command.s"
 	@echo "... src/lib/frame_transforms.o"
 	@echo "... src/lib/frame_transforms.i"
 	@echo "... src/lib/frame_transforms.s"

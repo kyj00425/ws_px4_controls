@@ -109,22 +109,41 @@ private:
         case MissionState::IDLE: break;
         case MissionState::TAKEOFF:
             send_pose_setpoint(0, 0, 10); // 10m 고도로 이륙 명령
-            if (current_pose_.z > 9.5) {
+            if (current_pose_.z > 4.5) {
                 RCLCPP_INFO(get_logger(), "Takeoff complete! Moving to first waypoint.");
                 state_ = MissionState::MOVING_TO_WAYPOINT;
             }
             break;
         case MissionState::MOVING_TO_WAYPOINT:
-            if (current_wp_idx_ >= waypoints_.size()) break;
+            // 마지막 웨이포인트를 지났다면 랑데부 상태로 전환
+            if (current_wp_idx_ >= waypoints_.size()) {
+                RCLCPP_INFO(get_logger(), "All waypoints visited. Moving to rendezvous point.");
+                state_ = MissionState::MOVING_TO_RENDEZVOUS;
+                break;
+            }
+
+            // 현재 웨이포인트로 이동 명령 발행
             publish_waypoint(current_wp_idx_);
-            if (is_close(current_pose_, waypoints_[current_wp_idx_], 5.0)) {
-                 RCLCPP_INFO(get_logger(), "Arrived at waypoint %zu. Searching for marker.", current_wp_idx_);
-                state_ = MissionState::SEARCHING_FOR_MARKER;
+
+            // 현재 웨이포인트에 도착했는지 확인
+            if (is_close(current_pose_, waypoints_[current_wp_idx_], 6.3)) {
+                RCLCPP_INFO(get_logger(), "Arrived at waypoint %zu.", current_wp_idx_);
+
+                // 이 웨이포인트가 ArUco 마커를 찾아야 하는 곳인지 확인
+                if (isArucoWaypoint(current_wp_idx_)) {
+                    // ArUco 웨이포인트 -> 마커 탐색 상태로 전환
+                    RCLCPP_INFO(get_logger(), "This is an ArUco waypoint. Searching for marker.");
+                    state_ = MissionState::SEARCHING_FOR_MARKER;
+                } else {
+                    // 일반 경유 웨이포인트 -> 즉시 다음 웨이포인트로 진행
+                    RCLCPP_INFO(get_logger(), "This is a fly-through waypoint. Proceeding to next.");
+                    ++current_wp_idx_;
+                }
             }
             break;
         case MissionState::SEARCHING_FOR_MARKER:
             if(current_wp_idx_<waypoints_.size())
-                send_pose_setpoint(waypoints_[current_wp_idx_].x,waypoints_[current_wp_idx_].y,waypoints_[current_wp_idx_].z+2);
+                send_pose_setpoint(waypoints_[current_wp_idx_].x,waypoints_[current_wp_idx_].y,waypoints_[current_wp_idx_].z+3);
             break;
         case MissionState::MOVING_TO_RENDEZVOUS:
             send_pose_setpoint(rendezvous_.x, rendezvous_.y, rendezvous_.z);
@@ -189,7 +208,7 @@ private:
         geometry_msgs::msg::PoseStamped sp; sp.header.frame_id="map"; sp.header.stamp=now();
         sp.pose.position.x=x; sp.pose.position.y=y; sp.pose.position.z=z; sp.pose.orientation.w=1.0; pose_cmd_pub_->publish(sp);
     }
-    void publish_waypoint(size_t i){ if(i<waypoints_.size()) send_pose_setpoint(waypoints_[i].x,waypoints_[i].y,waypoints_[i].z+5);}    
+    void publish_waypoint(size_t i){ if(i<waypoints_.size()) send_pose_setpoint(waypoints_[i].x,waypoints_[i].y,waypoints_[i].z+6);}    
 
     void load_waypoints(const std::string& file)
     {
@@ -237,6 +256,10 @@ private:
             // 최종 변환된 '월드 좌표'를 파일에 저장
             ofs << world_p.x << ',' << world_p.y << ',' << world_p.z << '\n';
         }
+    }
+    bool isArucoWaypoint(size_t index)
+    {
+        return index % 2 == 0;
     }
 };
 

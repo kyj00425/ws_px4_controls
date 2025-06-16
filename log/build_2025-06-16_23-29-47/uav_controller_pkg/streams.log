@@ -1,0 +1,78 @@
+[0.007s] Invoking command in '/home/kyj/ws_px4_controls/build/uav_controller_pkg': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/kyj/ws_px4_controls/src/uav_controller_pkg -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/kyj/ws_px4_controls/install/uav_controller_pkg
+[0.044s] -- The C compiler identification is GNU 11.4.0
+[0.081s] -- The CXX compiler identification is GNU 11.4.0
+[0.086s] -- Detecting C compiler ABI info
+[0.135s] -- Detecting C compiler ABI info - done
+[0.140s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.140s] -- Detecting C compile features
+[0.140s] -- Detecting C compile features - done
+[0.142s] -- Detecting CXX compiler ABI info
+[0.199s] -- Detecting CXX compiler ABI info - done
+[0.203s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.203s] -- Detecting CXX compile features
+[0.204s] -- Detecting CXX compile features - done
+[0.206s] -- Found ament_cmake: 1.3.11 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.449s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.492s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.518s] -- Found rclcpp: 16.0.11 (/opt/ros/humble/share/rclcpp/cmake)
+[0.552s] -- Found rosidl_generator_c: 3.1.6 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.556s] -- Found rosidl_adapter: 3.1.6 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.562s] -- Found rosidl_generator_cpp: 3.1.6 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.570s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.583s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.615s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.617s] -- Found rmw_fastrtps_cpp: 6.2.7 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)
+[0.687s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.2")  
+[0.709s] -- Found FastRTPS: /opt/ros/humble/include  
+[0.744s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[0.751s] -- Looking for pthread.h
+[0.807s] -- Looking for pthread.h - found
+[0.808s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[0.861s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[0.861s] -- Found Threads: TRUE  
+[0.896s] -- Found geometry_msgs: 4.2.4 (/opt/ros/humble/share/geometry_msgs/cmake)
+[0.904s] -- Found px4_msgs: 2.0.1 (/home/kyj/ws_px4_control/install/px4_msgs/share/px4_msgs/cmake)
+[0.913s] -- Found gazebo_msgs: 3.9.0 (/opt/ros/humble/share/gazebo_msgs/cmake)
+[0.940s] -- Found ament_lint_auto: 0.12.11 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.002s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[1.002s] -- Configured cppcheck include dirs: 
+[1.002s] -- Configured cppcheck exclude dirs and/or files: 
+[1.002s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.004s] -- Added test 'lint_cmake' to check CMake code style
+[1.005s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.009s] -- Added test 'uncrustify' to check C / C++ code style
+[1.009s] -- Configured uncrustify additional arguments: 
+[1.010s] -- Added test 'xmllint' to check XML markup files
+[1.011s] -- Configuring done
+[1.020s] -- Generating done
+[1.024s] -- Build files have been written to: /home/kyj/ws_px4_controls/build/uav_controller_pkg
+[1.032s] Invoked command in '/home/kyj/ws_px4_controls/build/uav_controller_pkg' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake /home/kyj/ws_px4_controls/src/uav_controller_pkg -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/kyj/ws_px4_controls/install/uav_controller_pkg
+[1.034s] Invoking command in '/home/kyj/ws_px4_controls/build/uav_controller_pkg': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/kyj/ws_px4_controls/build/uav_controller_pkg -- -j12 -l12
+[1.075s] [ 50%] [32mBuilding CXX object CMakeFiles/offboard_control_node.dir/src/offboard_control_node.cpp.o[0m
+[1.075s] [ 50%] [32mBuilding CXX object CMakeFiles/uav_controller.dir/src/uav_controller.cpp.o[0m
+[8.457s] [ 75%] [32m[1mLinking CXX executable offboard_control_node[0m
+[8.782s] [ 75%] Built target offboard_control_node
+[9.741s] [100%] [32m[1mLinking CXX executable uav_controller[0m
+[10.154s] [100%] Built target uav_controller
+[10.166s] Invoked command in '/home/kyj/ws_px4_controls/build/uav_controller_pkg' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/kyj/ws_px4_controls/build/uav_controller_pkg -- -j12 -l12
+[10.167s] Invoking command in '/home/kyj/ws_px4_controls/build/uav_controller_pkg': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/kyj/ws_px4_controls/build/uav_controller_pkg
+[10.174s] -- Install configuration: ""
+[10.174s] -- Execute custom install script
+[10.175s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/lib/uav_controller_pkg/offboard_control_node
+[10.185s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/lib/uav_controller_pkg/uav_controller
+[10.193s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/ament_index/resource_index/package_run_dependencies/uav_controller_pkg
+[10.201s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/ament_index/resource_index/parent_prefix_path/uav_controller_pkg
+[10.210s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/environment/ament_prefix_path.sh
+[10.218s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/environment/ament_prefix_path.dsv
+[10.227s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/environment/path.sh
+[10.234s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/environment/path.dsv
+[10.243s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/local_setup.bash
+[10.251s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/local_setup.sh
+[10.261s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/local_setup.zsh
+[10.269s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/local_setup.dsv
+[10.277s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/package.dsv
+[10.285s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/ament_index/resource_index/packages/uav_controller_pkg
+[10.292s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/cmake/uav_controller_pkgConfig.cmake
+[10.300s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/cmake/uav_controller_pkgConfig-version.cmake
+[10.309s] -- Symlinking: /home/kyj/ws_px4_controls/install/uav_controller_pkg/share/uav_controller_pkg/package.xml
+[10.319s] Invoked command in '/home/kyj/ws_px4_controls/build/uav_controller_pkg' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/kyj/ws_px4_controls/build/uav_controller_pkg

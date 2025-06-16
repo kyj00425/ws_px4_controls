@@ -1,1 +1,1 @@
-px4_ros_com
+/home/kyj/ws_px4_controls/build/px4_ros_com/ament_cmake_python/px4_ros_com/px4_ros_com.egg-info/top_level.txt
