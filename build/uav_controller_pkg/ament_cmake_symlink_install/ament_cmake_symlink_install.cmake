@@ -310,7 +310,7 @@ message(STATUS "Execute custom install script")
 
 # begin of custom install code
 
-# install("TARGETS" "offboard_control_node" "uav_controller" "DESTINATION" "lib/uav_controller_pkg")
+# install("TARGETS" "offboard_control_node" "uav_controller" "pose_to_tf_broadcaster" "DESTINATION" "lib/uav_controller_pkg")
 include("/home/kyj/ws_px4_controls/build/uav_controller_pkg/ament_cmake_symlink_install_targets_0_${CMAKE_INSTALL_CONFIG_NAME}.cmake")
 
 # install(FILES "/home/kyj/ws_px4_controls/build/uav_controller_pkg/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/uav_controller_pkg" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")

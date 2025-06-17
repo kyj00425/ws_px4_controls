@@ -1,8 +1,4 @@
-// uav_controller.cpp — PX4 local‑position variant (2025‑06‑13)
-// * Subscribes /fmu/out/vehicle_local_position (px4_msgs::msg::VehicleLocalPosition)
-// * Converts NED → ENU for internal map‑frame logic
-// * Rest of state machine identical
-
+// uav_controller.cpp — 최종 버전 (내부 NED / 출력 ENU)
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -14,17 +10,21 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "px4_msgs/msg/vehicle_local_position.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "px4_msgs/msg/vehicle_odometry.hpp"
 
-// ──────────────────────────────────────────────────────────────────────────────
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 enum class MissionState {
     IDLE,
     TAKEOFF,
     MOVING_TO_WAYPOINT,
     SEARCHING_FOR_MARKER,
-    MOVING_TO_RENDEZVOUS,
     MISSION_COMPLETE,
-    LANDING
+    PRECISION_LANDING
 };
 
 class UavController : public rclcpp::Node
@@ -32,38 +32,19 @@ class UavController : public rclcpp::Node
 public:
     UavController() : Node("uav_controller"), state_(MissionState::IDLE), current_wp_idx_(0)
     {
-        // 1. CSV 파일 로드 및 좌표 자동 변환
-        load_waypoints("/home/kyj/uav_wp.csv");
+        load_and_convert_waypoints_to_ned("/home/kyj/uav_wp.csv");
 
-        // 랑데부 포인트 설정 (월드 좌표)
-        // 참고: 필요하다면 이 랑데부 포인트도 로컬 좌표로 변환해야 합니다.
-        // 예: rendezvous_.x = -62.96... - DRONE_START_X;
-        //     rendezvous_.y = 99.09... - DRONE_START_Y;
-        //     ...
-        rendezvous_.x = -62.96309452779898 - DRONE_START_X;
-        rendezvous_.y =  99.09156129659259 - DRONE_START_Y;
-        rendezvous_.z =  -0.13497820025109772 - DRONE_START_Z;
-
-
-        // 퍼블리셔 및 서브스크라이버 설정
         pose_cmd_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("/command/pose", 10);
+        
         auto pose_qos = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();
-
-        // 2. 생성한 pose_qos 프로파일을 구독자 설정에 적용합니다.
         marker_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-            "/x500/target_pose", pose_qos, // '10' 대신 'pose_qos'로 변경
+            "/x500/target_pose", pose_qos,
             std::bind(&UavController::marker_cb, this, std::placeholders::_1));
-        // QoS 설정을 포함한 위치 정보 서브스크라이버
+
         auto sensor_qos = rclcpp::SensorDataQoS();
-        local_pos_sub_ = create_subscription<px4_msgs::msg::VehicleLocalPosition>(
-            "/fmu/out/vehicle_local_position", sensor_qos,
-            [this](const px4_msgs::msg::VehicleLocalPosition::SharedPtr msg)
-            {
-                // NED(x=N,y=E,z=D) → ENU(x=E,y=N,z=−D)
-                current_pose_.x = msg->y;      // East → x
-                current_pose_.y = msg->x;      // North → y
-                current_pose_.z = -msg->z;     // Up   → z
-            });
+        odometry_sub_ = create_subscription<px4_msgs::msg::VehicleOdometry>(
+            "/fmu/out/vehicle_odometry", sensor_qos,
+            std::bind(&UavController::odometry_cb, this, std::placeholders::_1));
             
         main_timer_ = create_wall_timer(std::chrono::milliseconds(100), std::bind(&UavController::main_loop, this));
 
@@ -73,144 +54,174 @@ public:
     }
 
 private:
-    // --- 월드 좌표계에서 드론의 시작 위치 (오프셋) ---
-    // Gazebo 월드 파일에 정의된 드론의 초기 pose 값
-    static constexpr double DRONE_START_X = -134.74925610706298; // Gazebo World X
-    static constexpr double DRONE_START_Y =  61.782506989510747; // Gazebo World Y
-    static constexpr double DRONE_START_Z =   0.14202179330315423;// Gazebo World Z
+    // --- 월드 좌표계(ENU)에서 드론의 시작 위치 (오프셋) ---
+    static constexpr double DRONE_START_X = -134.74925610706298; // East
+    static constexpr double DRONE_START_Y =  61.782506989510747; // North
+    static constexpr double DRONE_START_Z =  -0.28025816898307343; // Up
 
-    // pubs / subs
+    // Pubs/Subs
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_cmd_pub_;
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr marker_sub_;
-    rclcpp::Subscription<px4_msgs::msg::VehicleLocalPosition>::SharedPtr local_pos_sub_;
+    rclcpp::Subscription<px4_msgs::msg::VehicleOdometry>::SharedPtr odometry_sub_;
     rclcpp::TimerBase::SharedPtr main_timer_;
 
-    // mission data
+    // Mission data (모두 NED 좌표계 기준)
     MissionState state_;
     size_t current_wp_idx_;
-    std::vector<geometry_msgs::msg::Point> waypoints_;
-    std::vector<geometry_msgs::msg::Point> precise_markers_;
-    geometry_msgs::msg::Point current_pose_{}; // ENU map‑frame position
-    geometry_msgs::msg::Point rendezvous_;
+    std::vector<geometry_msgs::msg::Point> waypoints_ned_;
+    std::vector<geometry_msgs::msg::Point> precise_markers_world_;
+    geometry_msgs::msg::Pose current_pose_ned_{};
+    geometry_msgs::msg::Point landing_spot_ned_{};
 
-    // ───── main loop ─────
+    bool isArucoWaypoint(size_t index)
+    {
+        return (index == waypoints_ned_.size() - 1) || (index % 2 == 0);
+    }
+
+    void odometry_cb(const px4_msgs::msg::VehicleOdometry::SharedPtr msg)
+    {
+        // 위치와 방향 정보를 NED 좌표계 그대로 저장
+        current_pose_ned_.position.x = msg->position[0];
+        current_pose_ned_.position.y = msg->position[1];
+        current_pose_ned_.position.z = msg->position[2];
+        
+        current_pose_ned_.orientation.w = msg->q[0];
+        current_pose_ned_.orientation.x = msg->q[1];
+        current_pose_ned_.orientation.y = msg->q[2];
+        current_pose_ned_.orientation.z = msg->q[3];
+    }
+
     void main_loop()
     {
-        RCLCPP_INFO_THROTTLE(
-            this->get_logger(),
-            *this->get_clock(),
-            1000, // 1초에 한 번씩만 로그 출력
-            "Current state: %d, Altitude: %.2f m",
-            static_cast<int>(state_),
-            current_pose_.z
-        );
+        // 로그에는 고도(Up)를 표시하기 위해 NED의 z값에 -1을 곱함
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+            "State: %d, Altitude: %.2f m, WP_Idx: %zu",
+            static_cast<int>(state_), -current_pose_ned_.position.z, current_wp_idx_);
+
         switch(state_)
         {
         case MissionState::IDLE: break;
+
         case MissionState::TAKEOFF:
-            send_pose_setpoint(0, 0, 10); // 10m 고도로 이륙 명령
-            if (current_pose_.z > 4.5) {
-                RCLCPP_INFO(get_logger(), "Takeoff complete! Moving to first waypoint.");
+            send_setpoint_as_enu(0, 0, -10.0);
+            if (-current_pose_ned_.position.z > 9.5) {
+                RCLCPP_INFO(get_logger(), "Takeoff complete. Moving to first waypoint.");
                 state_ = MissionState::MOVING_TO_WAYPOINT;
             }
             break;
+
         case MissionState::MOVING_TO_WAYPOINT:
-            // 마지막 웨이포인트를 지났다면 랑데부 상태로 전환
-            if (current_wp_idx_ >= waypoints_.size()) {
-                RCLCPP_INFO(get_logger(), "All waypoints visited. Moving to rendezvous point.");
-                state_ = MissionState::MOVING_TO_RENDEZVOUS;
+            // ▼▼▼ CHANGED: 이 블록의 로직을 수정합니다 ▼▼▼
+            if (current_wp_idx_ >= waypoints_ned_.size()) {
+                RCLCPP_INFO(get_logger(), "Mission sequence complete. Hovering.");
+                state_ = MissionState::MISSION_COMPLETE; // 착륙 대신 안전한 호버링 상태로 전환
                 break;
             }
+            // ▲▲▲ CHANGED END ▲▲▲
 
-            // 현재 웨이포인트로 이동 명령 발행
-            publish_waypoint(current_wp_idx_);
+            {
+                const auto& wp = waypoints_ned_[current_wp_idx_];
+                // 웨이포인트 고도보다 5m 위에서 접근하도록 수정 (안전을 위해)
+                send_setpoint_as_enu(wp.x, wp.y, wp.z - 8.0);
+            }
 
-            // 현재 웨이포인트에 도착했는지 확인
-            if (is_close(current_pose_, waypoints_[current_wp_idx_], 6.3)) {
+            if (is_close(current_pose_ned_.position, waypoints_ned_[current_wp_idx_], 8.0)) {
                 RCLCPP_INFO(get_logger(), "Arrived at waypoint %zu.", current_wp_idx_);
-
-                // 이 웨이포인트가 ArUco 마커를 찾아야 하는 곳인지 확인
                 if (isArucoWaypoint(current_wp_idx_)) {
-                    // ArUco 웨이포인트 -> 마커 탐색 상태로 전환
-                    RCLCPP_INFO(get_logger(), "This is an ArUco waypoint. Searching for marker.");
                     state_ = MissionState::SEARCHING_FOR_MARKER;
                 } else {
-                    // 일반 경유 웨이포인트 -> 즉시 다음 웨이포인트로 진행
-                    RCLCPP_INFO(get_logger(), "This is a fly-through waypoint. Proceeding to next.");
                     ++current_wp_idx_;
                 }
             }
             break;
+
         case MissionState::SEARCHING_FOR_MARKER:
-            if(current_wp_idx_<waypoints_.size())
-                send_pose_setpoint(waypoints_[current_wp_idx_].x,waypoints_[current_wp_idx_].y,waypoints_[current_wp_idx_].z+3);
-            break;
-        case MissionState::MOVING_TO_RENDEZVOUS:
-            send_pose_setpoint(rendezvous_.x, rendezvous_.y, rendezvous_.z);
-            if (is_close(current_pose_, rendezvous_, 3.0)) {
-                RCLCPP_INFO(get_logger(), "Arrived at rendezvous. Mission complete.");
-                // ▼▼▼ 여기에 있던 save_precise_locations(...) 호출을 제거합니다 ▼▼▼
-                state_ = MissionState::MISSION_COMPLETE;
+            if(current_wp_idx_ < waypoints_ned_.size()) {
+                const auto& wp = waypoints_ned_[current_wp_idx_];
+                // 마커 탐색을 위해 웨이포인트보다 2m 위에서 호버링
+                send_setpoint_as_enu(wp.x, wp.y, wp.z - 2.0);
             }
             break;
+
+        case MissionState::PRECISION_LANDING:
+            RCLCPP_INFO(get_logger(), "Executing precision landing at [N: %.2f, E: %.2f]", landing_spot_ned_.x, landing_spot_ned_.y);
+            send_setpoint_as_enu(landing_spot_ned_.x, landing_spot_ned_.y, 1.0); // Land mode
+
+            if (-current_pose_ned_.position.z < 0.3) {
+                RCLCPP_INFO(get_logger(), "Precision landing complete. Mission finished.");
+                main_timer_->cancel();
+            }
+            break;
+
         case MissionState::MISSION_COMPLETE:
-            send_pose_setpoint(current_pose_.x,current_pose_.y,-1); state_ = MissionState::LANDING; break;
-        case MissionState::LANDING:
-            send_pose_setpoint(current_pose_.x,current_pose_.y,-1);
-            if(current_pose_.z<0.2) main_timer_->cancel();
+            RCLCPP_INFO(get_logger(), "Mission complete. Hovering at final location.");
+            if (!waypoints_ned_.empty()) {
+                const auto& last_wp = waypoints_ned_.back();
+                // 마지막 웨이포인트 상공에서 호버링
+                send_setpoint_as_enu(last_wp.x, last_wp.y, last_wp.z - 5.0);
+            }
             break;
         }
     }
-
-    // marker callback
     void marker_cb(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
-        // 1. 현재 '마커 탐색' 상태가 아니면 무시
-        if (state_ != MissionState::SEARCHING_FOR_MARKER) {
-            return;
-        }
+        if (state_ != MissionState::SEARCHING_FOR_MARKER) return;
 
-        // 2. 다음 상태로 즉시 변경하여 콜백 중복 실행 방지
-        if (current_wp_idx_ + 1 < waypoints_.size()) {
-            state_ = MissionState::MOVING_TO_WAYPOINT;
-        } else {
-            state_ = MissionState::MOVING_TO_RENDEZVOUS;
-        }
+        tf2::Vector3 relative_marker_vec(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
+        tf2::Quaternion drone_orientation;
+        tf2::fromMsg(current_pose_ned_.orientation, drone_orientation);
 
-        const auto& relative_marker_pose = msg->pose.position;
+        tf2::Vector3 rotated_marker_vec = tf2::quatRotate(drone_orientation, relative_marker_vec);
 
-        // --- 최종 로컬 좌표 계산 ---
-        // 드론의 현재 전역 위치에 카메라가 탐지한 상대 위치를 더함
-        geometry_msgs::msg::Point final_local_pose{};
-        final_local_pose.x = current_pose_.x + relative_marker_pose.x;
-        final_local_pose.y = current_pose_.y + relative_marker_pose.y;
-        
-        // ▼▼▼ Z값도 탐지된 상대 위치를 사용하도록 수정합니다 ▼▼▼
-        final_local_pose.z = current_pose_.z + relative_marker_pose.z;
+        geometry_msgs::msg::Point marker_pos_ned;
+        marker_pos_ned.x = current_pose_ned_.position.x + rotated_marker_vec.x();
+        marker_pos_ned.y = current_pose_ned_.position.y + rotated_marker_vec.y();
+        marker_pos_ned.z = current_pose_ned_.position.z + rotated_marker_vec.z();
 
-        RCLCPP_INFO(this->get_logger(), "Marker Found! Calculated Local Pose: [x: %.2f, y: %.2f, z: %.2f]",
-            final_local_pose.x, final_local_pose.y, final_local_pose.z);
+        geometry_msgs::msg::Point marker_pos_world;
+        marker_pos_world.x = marker_pos_ned.y + DRONE_START_X;
+        marker_pos_world.y = marker_pos_ned.x + DRONE_START_Y;
+        marker_pos_world.z = -marker_pos_ned.z + DRONE_START_Z;
 
-        // 3. 계산된 '로컬 좌표'를 리스트에 추가하고 파일에 저장합니다.
-        precise_markers_.push_back(final_local_pose);
+        precise_markers_world_.push_back(marker_pos_world);
         save_precise_locations("/home/kyj/precise_marker_locations.csv");
         
-        // 4. 다음 웨이포인트로 넘어가기 위해 인덱스를 증가시킵니다.
-        ++current_wp_idx_;
+        RCLCPP_INFO(get_logger(), "Marker found! CSV saved. Proceeding to next waypoint.");
+
+        if (current_wp_idx_ == waypoints_ned_.size() - 1) {
+            // 마지막 웨이포인트인 경우
+            RCLCPP_INFO(get_logger(), "Final marker found! Initiating precision landing on marker.");
+            landing_spot_ned_ = marker_pos_ned; // 착륙 지점을 '마커 위치'로 설정
+            state_ = MissionState::PRECISION_LANDING;   // 정밀 착륙 상태로 전환
+        } else {
+            // 마지막이 아닌 다른 ArUco 웨이포인트인 경우
+            RCLCPP_INFO(get_logger(), "Marker found! Proceeding to next waypoint.");
+            ++current_wp_idx_; // 다음 웨이포인트로 인덱스 증가
+            state_ = MissionState::MOVING_TO_WAYPOINT; // 다시 웨이포인트 이동 상태로 전환
+        }
     }
 
-    // utils
-    static bool is_close(const geometry_msgs::msg::Point&a,const geometry_msgs::msg::Point&b,double tol)
-    { double dx=a.x-b.x,dy=a.y-b.y,dz=a.z-b.z; return std::sqrt(dx*dx+dy*dy+dz*dz)<tol; }
-
-    void send_pose_setpoint(double x,double y,double z)
+    void send_setpoint_as_enu(double north, double east, double down)
     {
-        geometry_msgs::msg::PoseStamped sp; sp.header.frame_id="map"; sp.header.stamp=now();
-        sp.pose.position.x=x; sp.pose.position.y=y; sp.pose.position.z=z; sp.pose.orientation.w=1.0; pose_cmd_pub_->publish(sp);
+        geometry_msgs::msg::PoseStamped sp;
+        sp.header.frame_id = "map";
+        sp.header.stamp = this->get_clock()->now();
+        
+        sp.pose.position.x = east;
+        sp.pose.position.y = north;
+        sp.pose.position.z = -down;
+        
+        sp.pose.orientation.w = 1.0;
+        pose_cmd_pub_->publish(sp);
     }
-    void publish_waypoint(size_t i){ if(i<waypoints_.size()) send_pose_setpoint(waypoints_[i].x,waypoints_[i].y,waypoints_[i].z+6);}    
 
-    void load_waypoints(const std::string& file)
+    static bool is_close(const geometry_msgs::msg::Point& a, const geometry_msgs::msg::Point& b, double tol)
+    { 
+        double dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z; 
+        return std::sqrt(dx*dx + dy*dy + dz*dz) < tol; 
+    }
+
+    void load_and_convert_waypoints_to_ned(const std::string& file)
     {
         std::ifstream ifs(file);
         if (!ifs) {
@@ -223,43 +234,40 @@ private:
             if (line.empty()) continue;
             std::stringstream ss(line);
             std::string value_str;
-            geometry_msgs::msg::Point world_p{}; // 월드 좌표를 임시로 저장
-
-            // CSV에서 월드 좌표(X, Y, Z)를 읽어옴
-            std::getline(ss, value_str, ','); world_p.x = std::stod(value_str);
-            std::getline(ss, value_str, ','); world_p.y = std::stod(value_str);
-            std::getline(ss, value_str, ','); world_p.z = std::stod(value_str);
+            geometry_msgs::msg::Point world_p_enu{};
+            std::getline(ss, value_str, ','); world_p_enu.x = std::stod(value_str);
+            std::getline(ss, value_str, ','); world_p_enu.y = std::stod(value_str);
+            std::getline(ss, value_str, ','); world_p_enu.z = std::stod(value_str);
             
-            // 월드 좌표를 드론의 로컬 좌표로 변환
-            geometry_msgs::msg::Point local_p{};
-            local_p.x = world_p.x - DRONE_START_X;
-            local_p.y = world_p.y - DRONE_START_Y;
-            local_p.z = world_p.z - DRONE_START_Z;
+            double rel_enu_x = world_p_enu.x - DRONE_START_X;
+            double rel_enu_y = world_p_enu.y - DRONE_START_Y;
+            double rel_enu_z = world_p_enu.z - DRONE_START_Z;
 
-            waypoints_.push_back(local_p); // 변환된 로컬 좌표를 최종 웨이포인트로 저장
+            geometry_msgs::msg::Point p_ned{};
+            p_ned.x = rel_enu_y;
+            p_ned.y = rel_enu_x;
+            p_ned.z = -rel_enu_z; // NED Z(Down) = - ENU Z(Up)
+            waypoints_ned_.push_back(p_ned);
         }
-        RCLCPP_INFO(get_logger(), "Loaded and converted %zu waypoints from %s", waypoints_.size(), file.c_str());
+        RCLCPP_INFO(get_logger(), "Loaded and converted %zu waypoints to NED frame from %s", waypoints_ned_.size(), file.c_str());
     }
 
     void save_precise_locations(const std::string& file)
     {
-        std::ofstream ofs(file);
-        ofs.precision(15); // 정밀도 설정
-        ofs << "x,y,z\n";
-        for (const auto& local_p : precise_markers_) {
-            // 저장 직전에 로컬 좌표(local_p)를 월드 좌표로 변환
-            geometry_msgs::msg::Point world_p{};
-            world_p.x = local_p.x + DRONE_START_X;
-            world_p.y = local_p.y + DRONE_START_Y;
-            world_p.z = local_p.z + DRONE_START_Z;
-
-            // 최종 변환된 '월드 좌표'를 파일에 저장
+        std::ofstream ofs(file, std::ios_base::app);
+        if (!ofs) {
+            std::ofstream create_file(file);
+            create_file.precision(15);
+            create_file << "x,y,z\n";
+            create_file.close();
+            ofs.open(file, std::ios_base::app);
+        }
+        ofs.precision(15);
+        
+        if (!precise_markers_world_.empty()) {
+            const auto& world_p = precise_markers_world_.back();
             ofs << world_p.x << ',' << world_p.y << ',' << world_p.z << '\n';
         }
-    }
-    bool isArucoWaypoint(size_t index)
-    {
-        return index % 2 == 0;
     }
 };
 

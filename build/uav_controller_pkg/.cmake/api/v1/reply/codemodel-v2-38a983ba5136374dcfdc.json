@@ -19,7 +19,8 @@
 						0,
 						1,
 						2,
-						3
+						3,
+						4
 					]
 				}
 			],
@@ -37,7 +38,8 @@
 						0,
 						1,
 						2,
-						3
+						3,
+						4
 					]
 				}
 			],
@@ -46,14 +48,21 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "offboard_control_node::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-offboard_control_node-d742701c66a4e22cbdb0.json",
+					"jsonFile" : "target-offboard_control_node-a53f39353ee4a4a7427f.json",
 					"name" : "offboard_control_node",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
+					"id" : "pose_to_tf_broadcaster::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pose_to_tf_broadcaster-678a50bdd8ff2aba440a.json",
+					"name" : "pose_to_tf_broadcaster",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
 					"id" : "uav_controller::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-uav_controller-f8ca96698435e91f8a5e.json",
+					"jsonFile" : "target-uav_controller-8fdcb5ebdb331d0c8516.json",
 					"name" : "uav_controller",
 					"projectIndex" : 0
 				},
